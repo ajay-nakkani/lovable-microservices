@@ -1,3 +1,14 @@
 spring:
   application:
     name: configserver
+
+  cloud:
+    config.server.git:
+      uri: https://github.com/ajay-nakkani/lovable-config-server.git
+      username: anuj-kumar-sharma
+      password: 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
+      default-label: main
+
+
+server.port: 8888
+

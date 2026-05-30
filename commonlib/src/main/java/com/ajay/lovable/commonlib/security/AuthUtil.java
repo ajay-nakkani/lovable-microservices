@@ -2,7 +2,6 @@ package com.ajay.lovable.commonlib.security;
 
 
 
-import com.ajay.lovable.commonlib.dto.UserDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -28,11 +27,12 @@ public class AuthUtil {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(UserDto user)
+    public String generateToken(JwtUserPrincipal user)
     {
         return Jwts.builder()
                 .subject(user.username())
-                .claim("userId", user.id().toString())
+                .claim("userId", user.userId().toString())
+                .claim("name",user.name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+1000*60*10))
                 .signWith(getSecretKey()).compact();
@@ -45,8 +45,9 @@ public class AuthUtil {
 
         Long userId = Long.parseLong(claims.get("userId", String.class));
         String username = claims.getSubject();
+        String name = claims.get("name", String.class);
 
-        return new JwtUserPrincipal(userId,username,null,new ArrayList<>());
+        return new JwtUserPrincipal(userId,name, username,null,new ArrayList<>());
     }
 
     public Long getCurrentUserId()
