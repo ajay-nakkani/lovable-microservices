@@ -1,6 +1,6 @@
 package com.ajay.lovable.workspace.mapper;
 
-import com.ajay.lovable.workspace.dto.files.FileNode;
+import com.ajay.lovable.commonlib.dto.FileNode;
 import com.ajay.lovable.workspace.entitiy.ProjectFile;
 import org.mapstruct.Mapper;
 

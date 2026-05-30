@@ -5,4 +5,8 @@ spring:
     import: configserver:http://localhost:8888
 
 debug: true
+#
+#logging:
+#  level:
+#    org.springframework.security: TRACE
 

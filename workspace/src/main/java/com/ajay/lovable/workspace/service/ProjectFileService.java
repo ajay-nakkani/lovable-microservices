@@ -1,13 +1,12 @@
 package com.ajay.lovable.workspace.service;
 
-import com.ajay.lovable.workspace.dto.files.FileContentResponse;
-import com.ajay.lovable.workspace.dto.files.FileTreeResponse;
+import com.ajay.lovable.commonlib.dto.FileTreeDto;
 
 
 public interface ProjectFileService {
-    FileTreeResponse getFileTree(Long projectId);
+    FileTreeDto getFileTree(Long projectId);
 
-    FileContentResponse getFileContent(Long projectId, String path);
+    String getFileContent(Long projectId, String path);
 
     void saveFile(Long projectId, String filePath, String fileContent);
 }

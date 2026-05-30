@@ -4,6 +4,7 @@ package com.ajay.lovable.intelligenceservice.security;
 import com.ajay.lovable.commonlib.enums.ProjectPermission;
 import com.ajay.lovable.commonlib.enums.ProjectRole;
 import com.ajay.lovable.commonlib.security.AuthUtil;
+import com.ajay.lovable.intelligenceservice.client.WorkspaceClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,16 +16,11 @@ public class SecurityExpressions {
 
 
     private final AuthUtil authUtil;
+    private final WorkspaceClient workspaceClient;
 
     public boolean hasPermission(Long projectId, ProjectPermission permission)
     {
-        Long userId = authUtil.getCurrentUserId();
-
-        Optional<ProjectRole> role = projectMemberRepository.findRoleByUserIdAndProjectId(userId,projectId);
-
-        return role.map(x->{
-            return x.getPermissions().contains(permission);
-        }).orElse(false);
+       return workspaceClient.checkPermission(projectId,permission);
     }
 
 

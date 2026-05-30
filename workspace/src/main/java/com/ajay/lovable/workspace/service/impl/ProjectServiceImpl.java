@@ -2,6 +2,7 @@ package com.ajay.lovable.workspace.service.impl;
 
 
 import com.ajay.lovable.commonlib.dto.PlanDto;
+import com.ajay.lovable.commonlib.enums.ProjectPermission;
 import com.ajay.lovable.commonlib.enums.ProjectRole;
 import com.ajay.lovable.commonlib.error.BadRequestException;
 import com.ajay.lovable.commonlib.security.AuthUtil;
@@ -15,6 +16,7 @@ import com.ajay.lovable.workspace.entitiy.ProjectMemberId;
 import com.ajay.lovable.workspace.mapper.ProjectMapper;
 import com.ajay.lovable.workspace.repository.ProjectMemberRepository;
 import com.ajay.lovable.workspace.repository.ProjectRepository;
+import com.ajay.lovable.workspace.security.SecurityExpressions;
 import com.ajay.lovable.workspace.service.ProjectService;
 import com.ajay.lovable.workspace.service.ProjectTemplateService;
 import jakarta.transaction.Transactional;
@@ -22,6 +24,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -39,6 +43,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     ProjectTemplateService projectTemplateService;
 
+    SecurityExpressions securityExpressions;
+
     ProjectMapper projectMapper;
     private final ProjectMemberRepository projectMemberRepository;
 
@@ -46,9 +52,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectResponse createProject(ProjectRequest request) {
-//        if(!canCreateProject()) {
-//            throw new BadRequestException("User cannot create a New project with current Plan, Upgrade plan now.");
-//        }
+        if(!canCreateProject()) {
+            throw new BadRequestException("User cannot create a New project with current Plan, Upgrade plan now.");
+        }
         Long ownerUserId = authUtil.getCurrentUserId();
 
 
@@ -72,6 +78,16 @@ public class ProjectServiceImpl implements ProjectService {
 
         return projectMapper.toProjectResponse(newProject);
 
+    }
+
+    @Override
+    public boolean hasPermission(Long projectId, ProjectPermission permission) {
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        System.out.println(auth);
+        System.out.println(auth.getCredentials());
+        return securityExpressions.hasPermission(projectId, permission);
     }
 
 

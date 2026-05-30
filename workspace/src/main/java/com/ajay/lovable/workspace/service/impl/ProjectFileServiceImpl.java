@@ -1,9 +1,8 @@
 package com.ajay.lovable.workspace.service.impl;
 
+import com.ajay.lovable.commonlib.dto.FileNode;
+import com.ajay.lovable.commonlib.dto.FileTreeDto;
 import com.ajay.lovable.commonlib.error.ResourceNotFoundException;
-import com.ajay.lovable.workspace.dto.files.FileContentResponse;
-import com.ajay.lovable.workspace.dto.files.FileNode;
-import com.ajay.lovable.workspace.dto.files.FileTreeResponse;
 import com.ajay.lovable.workspace.entitiy.Project;
 import com.ajay.lovable.workspace.entitiy.ProjectFile;
 import com.ajay.lovable.workspace.mapper.ProjectFileMapper;
@@ -41,18 +40,18 @@ public class ProjectFileServiceImpl implements ProjectFileService {
     private String projectBucket;
 
     @Override
-    public FileTreeResponse getFileTree(Long projectId) {
+    public FileTreeDto getFileTree(Long projectId) {
 
         List<ProjectFile> projectFileList = projectFileRepository.findByProjectId(projectId);
 
         List<FileNode> fileNodes = projectFileMapper.toListOfFileNode(projectFileList);
 
-        return new FileTreeResponse(fileNodes);
+        return new FileTreeDto(fileNodes);
     }
 
 
     @Override
-    public FileContentResponse getFileContent(Long projectId, String path) {
+    public String getFileContent(Long projectId, String path) {
 
         String objectName = projectId + "/" + path;
         try{
@@ -63,7 +62,7 @@ public class ProjectFileServiceImpl implements ProjectFileService {
                                  .build()
             );
             String content = new String(is.readAllBytes(),StandardCharsets.UTF_8);
-            return new FileContentResponse(path,content);
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (Exception e){
             log.error("Failed to read file: {}/{}",projectId,path,e);

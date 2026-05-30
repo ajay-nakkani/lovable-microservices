@@ -25,7 +25,9 @@ public class SharedSecurityAutoConfiguration {
         return requestTemplate -> {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            if (authentication != null && authentication.getCredentials() instanceof String token) {
+            System.out.println("AUTH ajay = " + authentication);
+            Object creds = authentication.getCredentials();
+            if (creds instanceof String token) {
                 requestTemplate.header("Authorization", "Bearer " + token);
             }
         };

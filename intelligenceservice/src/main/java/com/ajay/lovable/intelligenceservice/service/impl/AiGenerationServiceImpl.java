@@ -60,7 +60,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
 
         Long userId = authUtil.getCurrentUserId();
 
-        usageService.checkDailyTokensUsage();
+//        usageService.checkDailyTokensUsage();
 
         ChatSession chatSession = createChatSessionIfNotExists(userId, projectId);
 

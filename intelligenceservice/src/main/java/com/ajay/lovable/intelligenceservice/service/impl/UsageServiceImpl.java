@@ -24,10 +24,6 @@ public class UsageServiceImpl implements UsageService {
     private final AccountClient accountClient;
 
 
-    @Value("${usage.max-tokens-limit}")
-    private int MAX_TOKENS_LIMIT;
-
-
     @Override
     public void recordTokenUsage(Long userId, int actualTokens) {
         LocalDate today = LocalDate.now();
@@ -54,9 +50,9 @@ public class UsageServiceImpl implements UsageService {
         if(plan.unlimitedAi()) return;
 
         int currentUsage = todayLog.getTokensUsed();
+        int limit = plan.maxTokensPerDay();
 
-
-        if (currentUsage >= MAX_TOKENS_LIMIT) {
+        if (currentUsage >= limit) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
                     "Daily limit reached, Upgrade now");
         }
