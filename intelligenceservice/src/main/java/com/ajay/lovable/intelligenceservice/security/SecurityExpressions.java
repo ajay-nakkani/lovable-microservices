@@ -5,7 +5,10 @@ import com.ajay.lovable.commonlib.enums.ProjectPermission;
 import com.ajay.lovable.commonlib.enums.ProjectRole;
 import com.ajay.lovable.commonlib.security.AuthUtil;
 import com.ajay.lovable.intelligenceservice.client.WorkspaceClient;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +16,7 @@ import java.util.Optional;
 
 @Component("security")
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityExpressions {
 
 
@@ -24,7 +28,16 @@ public class SecurityExpressions {
         System.out.println("HAS_PERMISSION THREAD = " + Thread.currentThread().getName());
         System.out.println("HAS_PERMISSION AUTH = " +
                 SecurityContextHolder.getContext().getAuthentication());
-       return workspaceClient.checkPermission(projectId,permission);
+
+        try {
+            return workspaceClient.checkPermission(projectId, permission);
+        } catch (FeignException.Unauthorized e) {
+            log.warn("Token expired or invalid during permission check for project: {}", projectId);
+            throw new CredentialsExpiredException("JWT token is expired or invalid");
+        } catch (FeignException e) {
+            log.error("Workspace-service failed during permission check: {}", e.getMessage());
+            return false;
+        }
     }
 
 
