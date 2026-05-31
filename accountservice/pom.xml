@@ -11,7 +11,7 @@
 	<groupId>com.ajay.lovable</groupId>
 	<artifactId>accountservice</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
+	<name>account-service</name>
 	<description/>
 	<url/>
 	<licenses>
@@ -154,9 +154,8 @@
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>${org.mapstruct.version}</version>
+							<version>1.6.0</version>
 						</path>
-
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
@@ -173,38 +172,23 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>3.4.4</version>
+				<configuration>
+					<to>
+						<image>docker.io/ajay980/lovable-${project.name}:${project.version}</image>
+						<tags>
+							<tag>latest</tag>
+						</tags>
+					</to>
+				</configuration>
 				<executions>
 					<execution>
-						<id>default-compile</id>
-						<phase>compile</phase>
+						<phase>package</phase>
 						<goals>
-							<goal>compile</goal>
+							<goal>build</goal>
 						</goals>
-						<configuration>
-							<annotationProcessorPaths>
-								<path>
-									<groupId>org.projectlombok</groupId>
-									<artifactId>lombok</artifactId>
-								</path>
-							</annotationProcessorPaths>
-						</configuration>
-					</execution>
-					<execution>
-						<id>default-testCompile</id>
-						<phase>test-compile</phase>
-						<goals>
-							<goal>testCompile</goal>
-						</goals>
-						<configuration>
-							<annotationProcessorPaths>
-								<path>
-									<groupId>org.projectlombok</groupId>
-									<artifactId>lombok</artifactId>
-								</path>
-							</annotationProcessorPaths>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

@@ -11,7 +11,7 @@
 	<groupId>com.ajay.lovable</groupId>
 	<artifactId>workspace</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
+	<name>workspace-service</name>
 	<description/>
 	<url/>
 	<licenses>
@@ -186,7 +186,7 @@
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>${mapstruct.version}</version>
+							<version>1.6.0</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
@@ -195,7 +195,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>
@@ -203,6 +202,27 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>3.4.4</version>
+				<configuration>
+					<to>
+						<image>docker.io/ajay980/lovable-${project.name}:${project.version}</image>
+						<tags>
+							<tag>latest</tag>
+						</tags>
+					</to>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>
