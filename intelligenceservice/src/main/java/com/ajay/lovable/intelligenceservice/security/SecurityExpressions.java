@@ -6,6 +6,7 @@ import com.ajay.lovable.commonlib.enums.ProjectRole;
 import com.ajay.lovable.commonlib.security.AuthUtil;
 import com.ajay.lovable.intelligenceservice.client.WorkspaceClient;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -20,6 +21,9 @@ public class SecurityExpressions {
 
     public boolean hasPermission(Long projectId, ProjectPermission permission)
     {
+        System.out.println("HAS_PERMISSION THREAD = " + Thread.currentThread().getName());
+        System.out.println("HAS_PERMISSION AUTH = " +
+                SecurityContextHolder.getContext().getAuthentication());
        return workspaceClient.checkPermission(projectId,permission);
     }
 
@@ -32,6 +36,9 @@ public class SecurityExpressions {
 
     public boolean canEditProject(Long projectId)
     {
+        System.out.println("HAS_PERMISSION THREAD = " + Thread.currentThread().getName());
+        System.out.println("HAS_PERMISSION AUTH = " +
+                SecurityContextHolder.getContext().getAuthentication());
         return hasPermission(projectId,ProjectPermission.EDIT);
     }
 

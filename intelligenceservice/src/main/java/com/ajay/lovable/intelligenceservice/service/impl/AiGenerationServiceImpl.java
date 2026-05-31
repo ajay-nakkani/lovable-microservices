@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -57,7 +58,9 @@ public class AiGenerationServiceImpl implements AiGenerationService {
     @Override
     @PreAuthorize("@security.canEditProject(#projectId)")
     public Flux<StreamResponse> streamResponse(String userPrompt, Long projectId) {
-
+        System.out.println("STREAM THREAD = " + Thread.currentThread().getName());
+        System.out.println("STREAM AUTH = " +
+                SecurityContextHolder.getContext().getAuthentication());
         Long userId = authUtil.getCurrentUserId();
 
 //        usageService.checkDailyTokensUsage();

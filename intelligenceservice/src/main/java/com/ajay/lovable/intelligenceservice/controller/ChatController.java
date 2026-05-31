@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
@@ -26,7 +27,9 @@ public class ChatController {
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<StreamResponse>> streamChat(@RequestBody ChatRequest request)
     {
-
+        System.out.println("STREAM THREAD = " + Thread.currentThread().getName());
+        System.out.println("STREAM AUTH = " +
+                SecurityContextHolder.getContext().getAuthentication());
         return aiGenerationService
                 .streamResponse(request.message(),request.projectId())
                 .map(data-> ServerSentEvent.<StreamResponse>builder().data(data).build());
