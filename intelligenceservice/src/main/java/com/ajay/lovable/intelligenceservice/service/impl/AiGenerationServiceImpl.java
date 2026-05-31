@@ -1,7 +1,9 @@
 package com.ajay.lovable.intelligenceservice.service.impl;
 
+import com.ajay.lovable.commonlib.enums.ChatEventStatus;
 import com.ajay.lovable.commonlib.enums.ChatEventType;
 import com.ajay.lovable.commonlib.enums.MessageRole;
+import com.ajay.lovable.commonlib.event.FileStoreRequestEvent;
 import com.ajay.lovable.commonlib.security.AuthUtil;
 import com.ajay.lovable.intelligenceservice.client.WorkspaceClient;
 import com.ajay.lovable.intelligenceservice.dto.chat.StreamResponse;
@@ -31,8 +33,10 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import org.springframework.kafka.core.KafkaTemplate;
 
 
 @Service
@@ -53,6 +57,8 @@ public class AiGenerationServiceImpl implements AiGenerationService {
     private final FileTreeContextAdvisor fileTreeContextAdvisor;
     private final LlmResponseParser llmResponseParser;
     private final UsageService usageService;
+
+    private final KafkaTemplate kafkaTemplate;
 
 
     @Override
@@ -116,7 +122,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
 
                                            long duration = endTime.get() - startTime.get();
 
-                                           finalizeChats(userPrompt, chatSession, fullResponseBuffer.toString(), duration,usageRef.get());
+                                           finalizeChats(userPrompt, chatSession, fullResponseBuffer.toString(), duration,usageRef.get(),userId);
                                        });
                          })
                          .doOnCancel(() -> log.warn("Stream CANCELLED"))
@@ -131,7 +137,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
     }
 
 
-    private void finalizeChats(String userMessage, ChatSession chatSession, String fullText, Long duration,Usage usage) {
+    private void finalizeChats(String userMessage, ChatSession chatSession, String fullText, Long duration,Usage usage,Long userId) {
 
         Long projectId = chatSession.
                                     getId().getProjectId();
@@ -167,6 +173,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
 
         chatEventList.addFirst(ChatEvent.builder().
                                         type(ChatEventType.THOUGHT)
+                                        .status(ChatEventStatus.CONFIRMED)
                                         .chatMessage(assistantChatMessage)
                                         .content("Thought for " + duration + "s")
                                         .sequenceOrder(0)
@@ -175,8 +182,17 @@ public class AiGenerationServiceImpl implements AiGenerationService {
         chatEventList.stream()
                      .filter(e -> e.getType() == ChatEventType.FILE_EDIT)
                      .forEach(e -> {
-//                             projectFileService.saveFile(projectId, e.getFilePath(), e.getContent())
-                     });
+                         String sagaId = UUID.randomUUID().toString();
+                         e.setSagaId(sagaId);
+                         FileStoreRequestEvent fileStoreRequestEvent = new FileStoreRequestEvent(
+                                 projectId,
+                                 sagaId,
+                                 e.getFilePath(),
+                                 e.getContent(),
+                                 userId
+                         );
+                         log.info("Storage request event sent: {}", e.getFilePath());
+                         kafkaTemplate.send("file-storage-request-event", "project-"+projectId, fileStoreRequestEvent);                     });
 
 
 

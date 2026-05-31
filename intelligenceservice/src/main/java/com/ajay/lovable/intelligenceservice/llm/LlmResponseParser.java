@@ -1,6 +1,7 @@
 package com.ajay.lovable.intelligenceservice.llm;
 
 
+import com.ajay.lovable.commonlib.enums.ChatEventStatus;
 import com.ajay.lovable.commonlib.enums.ChatEventType;
 import com.ajay.lovable.intelligenceservice.entity.ChatEvent;
 import com.ajay.lovable.intelligenceservice.entity.ChatMessage;
@@ -57,7 +58,8 @@ public class LlmResponseParser {
             Map<String, String> attrMap = extractAttributes(attributes); // {path: abc.css}
 
             ChatEvent.ChatEventBuilder builder = ChatEvent.builder()
-                    .chatMessage(parentMessage)
+                                                          .status(ChatEventStatus.CONFIRMED)
+                                                          .chatMessage(parentMessage)
                     .content(content) // This is your Markdown content
                     .sequenceOrder(orderCounter++);
 
@@ -65,6 +67,7 @@ public class LlmResponseParser {
                 case "message" -> builder.type(ChatEventType.MESSAGE);
                 case "file" -> {
                     builder.type(ChatEventType.FILE_EDIT);
+                    builder.status(ChatEventStatus.PENDING);
                     builder.filePath(attrMap.get("path")); // Required for files
                 }
                 case "tool" -> {

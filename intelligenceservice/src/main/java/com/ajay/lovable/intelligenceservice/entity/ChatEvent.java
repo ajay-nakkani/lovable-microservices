@@ -1,6 +1,7 @@
 package com.ajay.lovable.intelligenceservice.entity;
 
 
+import com.ajay.lovable.commonlib.enums.ChatEventStatus;
 import com.ajay.lovable.commonlib.enums.ChatEventType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,4 +39,12 @@ public class ChatEvent {
 
     @Column(columnDefinition = "text")
     String metadata;
+
+    String sagaId;
+
+
+    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+    ChatEventStatus status;
+
 }

@@ -23,6 +23,15 @@
         </processorPath>
         <module name="accountservice" />
       </profile>
+      <profile name="Annotation profile for apigateway" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="apigateway" />
+      </profile>
       <profile name="Annotation profile for intelligenceservice" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -34,7 +43,6 @@
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct/1.6.0/mapstruct-1.6.0.jar" />
         </processorPath>
         <module name="intelligenceservice" />
-        <module name="apigateway" />
         <module name="workspace" />
       </profile>
     </annotationProcessing>
