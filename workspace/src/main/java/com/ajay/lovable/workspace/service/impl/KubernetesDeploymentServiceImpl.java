@@ -8,6 +8,7 @@ import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -24,28 +25,42 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
     private final KubernetesClient client;
     private final StringRedisTemplate redisTemplate;
 
-    private static final String NAMESPACE = "shuttle-apps";
+    @Value("${app.preview.namespace}")
+    private String namespace;
+
+    @Value("${app.preview.domain}")
+    private String baseDomain;
+
+    @Value("${app.preview.proxy-port}")
+    private String proxyPort;
+
+
     private static final String POOL_LABEL = "status";
     private static final String PROJECT_LABEL = "project-id";
     private static final String IDLE = "idle";
     private static final String BUSY = "busy";
     private static final String SYNCER_CONTAINER = "syncer";
     private static final String RUNNER_CONTAINER = "runner";
-    private static final String REVERSE_PROXY_PORT = "8090";
+
 
     @Override
     public DeployResponse deploy(Long projectId) {
 
-        String domain = "project-" + projectId + ".app.domain.com";
+        String domain = "project-" + projectId + "." + baseDomain;
+
+        String formattedUrl = proxyPort.equals("80")
+                ? "http://" + domain
+                : "http://" + domain + ":" + proxyPort;
 
         Pod existingPod = findActivePod(projectId);
 
         if(existingPod != null) {
+            log.info("Found existing pod {} for project {}. Resuming...", existingPod.getMetadata().getName(), projectId);
             registerRoute(domain, existingPod);
-            return new DeployResponse("http://"+domain+":"+REVERSE_PROXY_PORT);
+            return new DeployResponse(formattedUrl);
         }
 
-        return claimAndStartNewPod(projectId, domain);
+        return claimAndStartNewPod(projectId, domain,formattedUrl);
 
     }
 
@@ -54,7 +69,7 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
         log.debug("Exec in {}:{} -> {}", podName, container, String.join(" ", command));
 
         CompletableFuture<String> data = new CompletableFuture<>();
-        try (ExecWatch ignored = client.pods().inNamespace(NAMESPACE).withName(podName)
+        try (ExecWatch ignored = client.pods().inNamespace(namespace).withName(podName)
                                        .inContainer(container)
                                        .writingOutput(new ByteArrayOutputStream())
                                        .writingError(new ByteArrayOutputStream())
@@ -86,11 +101,13 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
         if (podIp == null) throw new RuntimeException("Pod is running but has no IP!");
 
         redisTemplate.opsForValue().set("route:" + domain, podIp + ":5173", 6, TimeUnit.HOURS);
+        log.info("Route Registered: {} -> {}", domain, podIp);
+
     }
 
 
-    private DeployResponse claimAndStartNewPod(Long projectId, String domain) {
-        Pod pod = client.pods().inNamespace(NAMESPACE)
+    private DeployResponse claimAndStartNewPod(Long projectId, String domain, String formattedUrl) {
+        Pod pod = client.pods().inNamespace(namespace)
                         .withLabel(POOL_LABEL, IDLE)
                         .list().getItems().stream()
                         .findFirst()
@@ -99,7 +116,7 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
         String podName = pod.getMetadata().getName();
         log.info("Claiming pod {} for project {}", podName, projectId);
 
-        client.pods().inNamespace(NAMESPACE).withName(podName).edit(p -> {
+        client.pods().inNamespace(namespace).withName(podName).edit(p -> {
             p.getMetadata().getLabels().put(POOL_LABEL, BUSY);
             p.getMetadata().getLabels().put(PROJECT_LABEL, projectId.toString());
             return p;
@@ -108,7 +125,7 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
         try {
             // Syncer Commands
             String initialSyncCmd = String.format(
-                    "mc mirror --overwrite myminio/projects/%d/ /app/",
+                    "rm -rf /app/* && mc mirror --overwrite myminio/projects/%d/ /app/",
                     projectId);
 
             log.info("Starting initial sync for project {} in pod {}", projectId, podName);
@@ -125,20 +142,23 @@ public class KubernetesDeploymentServiceImpl implements DeploymentService {
             log.info("Starting dev server for project {}...", projectId);
             execCommand(podName, RUNNER_CONTAINER, "sh", "-c", startCmd);
 
-            registerRoute(domain, pod);
 
-            log.info("Deployment successful: http://{}:{}", domain, REVERSE_PROXY_PORT);
-            return new DeployResponse("http://" + domain + ":" + REVERSE_PROXY_PORT);
+            Pod updatedPod = client.pods().inNamespace(namespace).withName(podName).get();
+
+            registerRoute(domain, updatedPod);
+
+            log.info("Deployment successful: {}",formattedUrl);
+            return new DeployResponse(formattedUrl);
 
         } catch(Exception e) {
             log.error("Deployment failed for project {}. Releasing pod {}.", projectId, podName, e);
-            client.pods().inNamespace(NAMESPACE).withName(podName).delete();
-            throw new RuntimeException("Failed to deploy the project with id: "+projectId);
+            client.pods().inNamespace(namespace).withName(podName).delete();
+            throw new RuntimeException("Failed to deploy project " + projectId + ": " + e.getMessage(), e);
         }
     }
 
     Pod findActivePod(Long projectId) {
-        return client.pods().inNamespace(NAMESPACE)
+        return client.pods().inNamespace(namespace)
                      .withLabel(PROJECT_LABEL, projectId.toString())
                      .withLabel(POOL_LABEL, BUSY) // Only find active/busy ones
                      .list().getItems().stream()
