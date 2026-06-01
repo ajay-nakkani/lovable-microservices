@@ -101,19 +101,24 @@ public class AiGenerationServiceImpl implements AiGenerationService {
                          .chatResponse()
                          .doOnNext(chatResponse ->
                          {
-                             String content = chatResponse.getResult()
-                                                          .getOutput()
-                                                          .getText();
-                             if (content != null && !content.isEmpty() && endTime.get() == 0) {
-                                 endTime.set(System.currentTimeMillis());
+                             if (chatResponse.getResults() != null && !chatResponse.getResults().isEmpty()) {
+
+                                 String content = chatResponse.getResult()
+                                                              .getOutput()
+                                                              .getText();
+                                 if (content != null && !content.isEmpty() && endTime.get() == 0) {
+                                     endTime.set(System.currentTimeMillis());
+                                 }
+
+
+                                 if (chatResponse.getMetadata()
+                                                 .getUsage() != null) {
+                                     usageRef.set(chatResponse.getMetadata()
+                                                              .getUsage());
+                                 }
+
+                                 fullResponseBuffer.append(content);
                              }
-
-
-                             if(chatResponse.getMetadata().getUsage() != null) {
-                                 usageRef.set(chatResponse.getMetadata().getUsage());
-                             }
-
-                             fullResponseBuffer.append(content);
                          })
                          .doOnComplete(() -> {
                              Schedulers.boundedElastic()
@@ -131,8 +136,12 @@ public class AiGenerationServiceImpl implements AiGenerationService {
                                                      .getOutput()
                                                      .getText() != null)
                          .map(response -> {
-                             String text = response.getResult().getOutput().getText();
-                             return new StreamResponse(text != null ? text : "");
+                             if (response.getResults() != null && !response.getResults().isEmpty()) {
+                                 String text = response.getResult().getOutput().getText();
+                                 return new StreamResponse(text != null ? text : "");
+                             }
+
+                             return new StreamResponse("");
                          });
     }
 
