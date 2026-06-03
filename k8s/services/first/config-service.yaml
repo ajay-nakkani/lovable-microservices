@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: config-service
-          image: ajay980/lovable-config-service:latest
+          image: ajay980/lovable-config-server:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
