@@ -5,8 +5,8 @@ spring:
   cloud:
     config.server.git:
       uri: https://github.com/ajay-nakkani/lovable-config-server.git
-      username: anuj-kumar-sharma
-      password: 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
+      username: ajay-nakkani
+      password: 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
       default-label: main
 
 

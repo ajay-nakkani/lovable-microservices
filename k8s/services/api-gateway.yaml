@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: ajay980/lovable-api-gateway:latest
+          image: ajay980/lovable-api-gateway@sha256:4908289fd654913dc3bbf53c850f65c9175e9415557f2bad7964dd6a17e63afb
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
