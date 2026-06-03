@@ -6,6 +6,7 @@ import com.ajay.lovable.commonlib.enums.ChatEventType;
 import com.ajay.lovable.intelligenceservice.entity.ChatEvent;
 import com.ajay.lovable.intelligenceservice.entity.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -52,7 +53,9 @@ public class LlmResponseParser {
         while (matcher.find()) {
             String tagName = matcher.group(2).toLowerCase(); // file
             String attributes = matcher.group(3);  // path = "abc.css"
-            String content = matcher.group(4).trim(); // Updated this file
+            String content = StringEscapeUtils.unescapeHtml4(
+                    matcher.group(4).trim()
+            );// Updated this file
 
             // Extract attributes map
             Map<String, String> attrMap = extractAttributes(attributes); // {path: abc.css}
