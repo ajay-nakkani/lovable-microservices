@@ -19,11 +19,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
 @Service
@@ -62,7 +65,7 @@ public class ProjectFileServiceImpl implements ProjectFileService {
                                  .object(objectName)
                                  .build()
             );
-            String content = new String(is.readAllBytes(),StandardCharsets.UTF_8);
+           // String content = new String(is.readAllBytes(),StandardCharsets.UTF_8);
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (Exception e){
@@ -117,6 +120,40 @@ public class ProjectFileServiceImpl implements ProjectFileService {
         }
 
 
+    }
+
+    @Override
+    public byte[] downloadProjectZip(Long projectId) {
+        List<ProjectFile> projectFiles = projectFileRepository.findByProjectId(projectId);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            for (ProjectFile file : projectFiles) {
+                String objectName = projectId + "/" + file.getPath();
+                try (InputStream is = minioClient.getObject(
+                        GetObjectArgs.builder()
+                                     .bucket(projectBucket)
+                                     .object(objectName)
+                                     .build())) {
+
+                    zos.putNextEntry(new ZipEntry(file.getPath()));
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = is.read(buffer)) != -1) {
+                        zos.write(buffer, 0, bytesRead);
+                    }
+                    zos.closeEntry();
+                }
+            }
+
+            zos.finish();
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            log.error("Failed to create zip for project: {}", projectId, e);
+            throw new RuntimeException("Failed to create project zip", e);
+        }
     }
 
     private String determineContentType(String path) {
