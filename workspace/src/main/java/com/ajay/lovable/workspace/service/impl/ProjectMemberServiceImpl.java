@@ -50,7 +50,18 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
 
         return new ArrayList<>((projectMemberRepository.findByIdProjectId(
                 projectId)).stream()
-                           .map(projectMemberMapper::toMemberResponseFromProjectMember)
+                           .map((mr)->{
+                               try{
+                                   var user = accountClient.getUserById(mr.getId()
+                                                                          .getUserId());
+
+                                   return new MemberResponse(mr.getId()
+                                                               .getUserId(), user.username(),user.name(),mr.getProjectRole(),mr.getInvitedAt());
+
+                               } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                               }
+                           })
                            .toList());
     }
 
